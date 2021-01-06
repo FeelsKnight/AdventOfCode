@@ -96,43 +96,33 @@ LLLLLLL.LLLLLLLLL.LLLLLLLLLLLLLL.LLLL.LLLLLLLLLLLLLLL.LLLLLLLLLLLLLLLLLLLLLLLLLL
 LLLLLLL.LLLLLLLLL.LLLLLLLLLLLLLL.LLLL.LLLLLLLLL.LLLLL.LLLLLLL.LLLLLLLLL.LLLLLLLL.LLLLLLLL.LLLLLLLLL
 LLLLLLL.LLLLLLLLL.LLLLLL.LLLLLLL.LLLL.LLLLLLLLLLLLLLL.LLLLLLL.LLLL.LLLL.LLLLLLLL.LLLLLLLL.LLLLLLLLL
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL.LLLL.LLLL.LLLL.LLLLL.LLLLLLL.LLLL.L.LLLLLLLLLLL.LLLLLL.L.LLLLLLLLL"""
-input_list = list(map(lambda x: list(x), input_str.split("\n")))
+input_list = list(map(list, input_str.split("\n")))
 last_state = input_list[:]
-last_change_mask = list(map(lambda row: list(map(lambda col: 1, row)), input_list))
-next_change_mask = last_change_mask[:]
-next_state = []
+next_state = last_state[:]
+next_change_mask = list(map(lambda row: list(map(lambda col: True, row)), last_state))
 
 
 def get_neighbors(i, j):
     neighbors = []
-    #print(i, j)
     i_lower = i-1 if i > 0 else 0
-    i_upper = i+2 if i < len(last_state) else len(last_state)
+    i_upper = i+1 if i < len(last_state) - 1 else len(last_state) - 1
     j_lower = j-1 if j > 0 else 0
-    j_upper = j+2 if j < len(last_state[0]) else len(last_state[0])
-    #print(i_lower, i_upper, j_lower, j_upper)
-    for row in last_state[i_lower:i_upper]:
-        #print(row[j_lower:j_upper])
-        for col in row[j_lower:j_upper]:
-            if last_state.index(row) == i and row.index(col) == j:
-                continue
-            neighbors.append([last_state.index(row), row.index(col)])
-    #print(neighbors)
+    j_upper = j+1 if j < len(last_state[0]) - 1 else len(last_state[0]) - 1
+    for _i in range(i_lower, i_upper):
+        for _j in range(j_lower, j_upper):
+            neighbors.append(tuple([_i, _j]))
     return neighbors
 
 
 def solve1():
-    global next_state
-    global last_change_mask
+    global last_state
+    global next_change_mask
     for iteration in range(50):
-        next_state = last_state[:]
-        last_change_mask = next_change_mask[:]
-        for row in last_state:
-            for col in row:
-                i = last_state.index(row)
-                j = row.index(col)
+        last_state = next_state[:]
+        for i in range(len(last_state)):
+            for j in range(len(last_state[i])):
                 if last_state[i][j] == ".":
-                    next_change_mask[i][j] = 0
+                    next_change_mask[i][j] = False
                     continue
                 neighbors = get_neighbors(i, j)
                 occupied_neighbors = list(filter(lambda x: last_state[x[0]][x[1]] == "#", neighbors))
@@ -142,19 +132,12 @@ def solve1():
                     next_state[i][j] = "L"
                 else:
                     next_state[i][j] = last_state[i][j]
-                next_change_mask[i][j] = 1 if last_state[i][j] == next_state[i][j] else 0
-
+        next_change_mask = list(map(lambda _i: list(map(lambda _j: next_state[_i][_j] != last_state[_i][_j], range(len(next_state[0])))), range(len(next_state))))
         print(iteration)
         for row in next_change_mask:
             print(row)
-        for row in next_state:
-            print(row)
-        if not any(last_change_mask) and not any(next_change_mask):
+        if not any(sum(next_change_mask, [])):
             break
-    count = 0
-    for row in next_state:
-        for col in row:
-            if next_state[next_state.index(row)][row.index(col)] == "#":
-                count += 1
+    count = sum(next_state, []).count("#")
     print(count)
 
