@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 input_str = """LLLLLLL.LLLLLLLLL.LLLLLL.LLLLLLLLLLLL.LLLLLLLLLLLLLLL.LLLLLLL.LLLL.LLLL.LLLLLLLLLLLLLLLLL.LLLLLLLLL
 LLLLLLLLLLLLLLLLL.LLLLLLLLLLLLLL.LLLL.LLLLLLLLL.LLLLL.LLLLLLLLLLLL.LLLL.LLLLLLLLLLLLLLLLL.LLLLLLLLL
 LLLLLLL.LLLLLLLLLLLLLLLLLLLLLLLL.LLLL.LLLLLLLLL.LLLLLLLLLLLLL.LLLL.LLLL.LLLLLLLLLLLLLLLLLLLLLLLLLLL
@@ -96,21 +99,22 @@ LLLLLLL.LLLLLLLLL.LLLLLLLLLLLLLL.LLLL.LLLLLLLLLLLLLLL.LLLLLLLLLLLLLLLLLLLLLLLLLL
 LLLLLLL.LLLLLLLLL.LLLLLLLLLLLLLL.LLLL.LLLLLLLLL.LLLLL.LLLLLLL.LLLLLLLLL.LLLLLLLL.LLLLLLLL.LLLLLLLLL
 LLLLLLL.LLLLLLLLL.LLLLLL.LLLLLLL.LLLL.LLLLLLLLLLLLLLL.LLLLLLL.LLLL.LLLL.LLLLLLLL.LLLLLLLL.LLLLLLLLL
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL.LLLL.LLLL.LLLL.LLLLL.LLLLLLL.LLLL.L.LLLLLLLLLLL.LLLLLL.L.LLLLLLLLL"""
-input_list = list(map(list, input_str.split("\n")))
-last_state = input_list[:]
-next_state = last_state[:]
-next_change_mask = list(map(lambda row: list(map(lambda col: True, row)), last_state))
+input_list = np.array(np.fromiter(row, dtype=np.str) for row in input_str.split("\n"))
+last_state = np.copy(input_list)
+next_state = np.copy(last_state)
+next_change_mask = np.ones(next_state.shape, dtype=bool)
 
 
 def get_neighbors(i, j):
     neighbors = []
     i_lower = i-1 if i > 0 else 0
-    i_upper = i+1 if i < len(last_state) - 1 else len(last_state) - 1
+    i_upper = i+2 if i < len(last_state) - 1 else len(last_state) - 1
     j_lower = j-1 if j > 0 else 0
-    j_upper = j+1 if j < len(last_state[0]) - 1 else len(last_state[0]) - 1
+    j_upper = j+2 if j < len(last_state[0]) - 1 else len(last_state[0]) - 1
     for _i in range(i_lower, i_upper):
         for _j in range(j_lower, j_upper):
-            neighbors.append(tuple([_i, _j]))
+            if _i != i or _j != j:
+                neighbors.append(tuple([_i, _j]))
     return neighbors
 
 
@@ -118,9 +122,9 @@ def solve1():
     global last_state
     global next_change_mask
     for iteration in range(50):
-        last_state = next_state[:]
-        for i in range(len(last_state)):
-            for j in range(len(last_state[i])):
+        last_state = np.copy(next_state)
+        for i, row in np.ndenumerate(next_state):
+            for j, value in np.ndenumerate(row):
                 if last_state[i][j] == ".":
                     next_change_mask[i][j] = False
                     continue
